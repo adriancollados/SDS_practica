@@ -79,6 +79,10 @@ func Run() {
 		json.NewDecoder(r.Body).Decode(&resp) // decodificamos la respuesta para utilizar sus campos más adelante
 		fmt.Println(resp)                     // imprimimos por pantalla
 		r.Body.Close()
+
+	case "subir":
+		//codigo para transferir archivos
+	case ""
 	}
 
 }
