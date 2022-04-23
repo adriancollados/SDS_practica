@@ -1,0 +1,5 @@
+package operaciones
+
+func Registro() {
+
+}
