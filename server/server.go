@@ -14,5 +14,8 @@ func Run() {
 
 	http.HandleFunc("/", handler)
 
-	comprueba(http.ListenAndServeTLS(":9090", ""))
+	comprueba(http.ListenAndServeTLS(":9090", "loaclhost.crt", "localhost.key", nil))
+}
+
+func handler(w http.ResponseWriter, req *http.Request) {
 }
