@@ -56,7 +56,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-type", "text/plain")
 
 	switch req.Form.Get("cmd") {
-	case "register":
+	case "registro":
 		_, existe := usuarios[req.Form.Get("usuario")]  //comprobamos si el usuario ya existe
 		if existe {
 			respuesta(w, false, "Usuario ya registrado", nil)
