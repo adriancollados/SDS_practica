@@ -69,11 +69,11 @@ func Run() {
 		fmt.Println()
 
 	case "login":
-		data = url.Values{}
-		data.Set("cmd", "login")                                   // comando (string)
-		data.Set("user", "usuario")                                // usuario (string)
-		data.Set("pass", util.Encode64(keyLogin))                  // contraseña (a base64 porque es []byte)
-		r, err = cliente.PostForm("https://localhost:10443", data) // enviamos por POST
+		data := url.Values{}
+		data.Set("cmd", "login")                                    // comando (string)
+		data.Set("user", "usuario")                                 // usuario (string)
+		data.Set("pass", util.Encode64(keyLogin))                   // contraseña (a base64 porque es []byte)
+		r, err := cliente.PostForm("https://localhost:10443", data) // enviamos por POST
 		comprueba(err)
 		resp := server.Resp{}
 		json.NewDecoder(r.Body).Decode(&resp) // decodificamos la respuesta para utilizar sus campos más adelante
@@ -82,7 +82,8 @@ func Run() {
 
 	case "subir":
 		//codigo para transferir archivos
-	case ""
+	default:
+		panic("Algo ha fallado")
 	}
 
 }
