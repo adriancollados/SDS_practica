@@ -1,14 +1,14 @@
 package server
 
 import (
-	"net/http"
-	"time"
-	"io"
-	"encoding/json"
-	"crypto/rand"
-	"sdsGrupal/util"
 	"bytes"
-	
+	"crypto/rand"
+	"encoding/json"
+	"io"
+	"net/http"
+	"sdsGrupal/util"
+	"time"
+
 	"golang.org/x/crypto/argon2"
 )
 
@@ -18,25 +18,25 @@ func comprueba(e error) {
 	}
 }
 
-type usuario struct{
-	Nombre string
-	Username string
-	Email string
-	Hash []byte
-	Sal []byte
-	Token []byte
+type usuario struct {
+	Nombre      string
+	Username    string
+	Email       string
+	Hash        []byte
+	Sal         []byte
+	Token       []byte
 	Ultconexion time.Time
 }
 
 var usuarios map[string]usuario
 
-type Resp struct{
+type Resp struct {
 	Correcto bool
-	Mensaje string
-	Token []byte
+	Mensaje  string
+	Token    []byte
 }
 
-func respuesta(w io.Writer, correcto bool, mensaje string, token []byte){
+func respuesta(w io.Writer, correcto bool, mensaje string, token []byte) {
 	r := Resp{Correcto: correcto, Mensaje: mensaje, Token: token}
 	rJSON, err := json.Marshal(&r)
 	comprueba(err)
@@ -48,7 +48,7 @@ func Run() {
 
 	http.HandleFunc("/", handler)
 
-	comprueba(http.ListenAndServeTLS(":9090", "loaclhost.crt", "localhost.key", nil))
+	comprueba(http.ListenAndServeTLS(":9090", "localhost.crt", "localhost.key", nil))
 }
 
 func handler(w http.ResponseWriter, req *http.Request) {
@@ -57,7 +57,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 
 	switch req.Form.Get("cmd") {
 	case "registro":
-		_, existe := usuarios[req.Form.Get("usuario")]  //comprobamos si el usuario ya existe
+		_, existe := usuarios[req.Form.Get("usuario")] //comprobamos si el usuario ya existe
 		if existe {
 			respuesta(w, false, "Usuario ya registrado", nil)
 			return
@@ -80,7 +80,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		respuesta(w, true, "Usuario registrado correctamente", u.Token)
 
 	case "login":
-		u, existe := usuarios[req.Form.Get("usuario")] 
+		u, existe := usuarios[req.Form.Get("usuario")]
 		if !existe {
 			respuesta(w, false, "Usuario inexistente", nil)
 			return
@@ -88,7 +88,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 
 		contrasenya := util.Decode64(req.Form.Get("password"))
 		hash := argon2.IDKey([]byte(contrasenya), u.Sal, 16384, 8, 1, 32)
-		if !bytes.Equal(u.Hash, hash) {        
+		if !bytes.Equal(u.Hash, hash) {
 			respuesta(w, false, "Credenciales inválidas", nil)
 		} else {
 			u.Ultconexion = time.Now()
@@ -98,9 +98,8 @@ func handler(w http.ResponseWriter, req *http.Request) {
 			respuesta(w, true, "Credenciales válidas", u.Token)
 		}
 
-
 	case "data":
-		u, existe := usuarios[req.Form.Get("usuario")] 
+		u, existe := usuarios[req.Form.Get("usuario")]
 		if !existe {
 			respuesta(w, false, "No autorizado", nil)
 			return
@@ -112,6 +111,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-	default: respuesta(w, false, "No existe el comando", nil)
-	}	
+	default:
+		respuesta(w, false, "No existe el comando", nil)
+	}
 }

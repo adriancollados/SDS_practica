@@ -11,11 +11,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	usr "sdsGrupal/client/operaciones"
 	"sdsGrupal/server"
 	"sdsGrupal/util"
 )
 
 func comprueba(e error) {
+	usr.Registro()
 	if e != nil {
 		panic(e)
 	}
