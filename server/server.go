@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"bytes"
@@ -29,12 +29,12 @@ func respuesta(w io.Writer, correcto bool, mensaje string, token []byte) {
 	w.Write(rJSON)
 }
 
-func main() {
+func Run() {
 	usuarios = make(map[string]models.Usuario) //inicializamos el mapa de usuarios
 
 	http.HandleFunc("/", handler)
 
-	comprueba(http.ListenAndServeTLS(":9090", "../localhost.crt", "../localhost.key", nil))
+	comprueba(http.ListenAndServeTLS(":9090", "localhost.crt", "localhost.key", nil))
 }
 
 func handler(w http.ResponseWriter, req *http.Request) {

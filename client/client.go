@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"crypto/rand"
@@ -23,7 +23,7 @@ func comprueba(e error) {
 	}
 }
 
-func main() {
+func Run() {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
