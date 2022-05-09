@@ -3,14 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	u "sds/util"
 )
-
-// función para comprobar errores (ahorra escritura)
-func chk(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
 
 func handler(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()                              //Es necesario parsear el usuario
@@ -36,5 +30,5 @@ func main() {
 	// codee = data[:32] //El codigo es los primeros 32
 	// abrirArchivo()
 	http.HandleFunc("/", handler)
-	chk(http.ListenAndServeTLS(":10443", "../localhost.crt", "../localhost.key", nil))
+	u.Chk(http.ListenAndServeTLS(":10443", "../localhost.crt", "../localhost.key", nil))
 }

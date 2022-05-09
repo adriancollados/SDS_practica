@@ -10,14 +10,22 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 )
 
-// chk comprueba y sale si hay errores (ahorra escritura en programas sencillos)
-func chk(e error) {
+// Chk comprueba y sale si hay errores (ahorra escritura en programas sencillos)
+func Chk(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func Response(w io.Writer, ok bool, msg string) {
+	r := Resp{Ok: ok, Msg: msg}    // formateamos respuesta
+	rJSON, err := json.Marshal(&r) // codificamos en JSON
+	Chk(err)                       // comprobamos error
+	w.Write(rJSON)                 // escribimos el JSON resultante
 }
 
 // función para cifrar (AES-CTR 256), adjunta el IV al principio
@@ -25,7 +33,7 @@ func Encrypt(data, key []byte) (out []byte) {
 	out = make([]byte, len(data)+16)    // reservamos espacio para el IV al principio
 	rand.Read(out[:16])                 // generamos el IV
 	blk, err := aes.NewCipher(key)      // cifrador en bloque (AES), usa key
-	chk(err)                            // comprobamos el error
+	Chk(err)                            // comprobamos el error
 	ctr := cipher.NewCTR(blk, out[:16]) // cifrador en flujo: modo CTR, usa IV
 	ctr.XORKeyStream(out[16:], data)    // ciframos los datos
 	return
@@ -35,7 +43,7 @@ func Encrypt(data, key []byte) (out []byte) {
 func Decrypt(data, key []byte) (out []byte) {
 	out = make([]byte, len(data)-16)     // la salida no va a tener el IV
 	blk, err := aes.NewCipher(key)       // cifrador en bloque (AES), usa key
-	chk(err)                             // comprobamos el error
+	Chk(err)                             // comprobamos el error
 	ctr := cipher.NewCTR(blk, data[:16]) // cifrador en flujo: modo CTR, usa IV
 	ctr.XORKeyStream(out, data[16:])     // desciframos (doble cifrado) los datos
 	return
@@ -56,7 +64,7 @@ func Decompress(data []byte) []byte {
 
 	r, err := zlib.NewReader(bytes.NewReader(data)) // lector descomprime al leer
 
-	chk(err)         // comprobamos el error
+	Chk(err)         // comprobamos el error
 	io.Copy(&b, r)   // copiamos del descompresor (r) al buffer (b)
 	r.Close()        // cerramos el lector (buffering)
 	return b.Bytes() // devolvemos los datos descomprimidos
@@ -70,6 +78,6 @@ func Encode64(data []byte) string {
 // función para decodificar de string a []bytes (Base64)
 func Decode64(s string) []byte {
 	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
-	chk(err)                                     // comprobamos el error
+	Chk(err)                                     // comprobamos el error
 	return b                                     // devolvemos los datos originales
 }
