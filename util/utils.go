@@ -24,11 +24,11 @@ func Chk(e error) {
 	}
 }
 
-func Response(w io.Writer, ok bool, msg string) {
-	r := Resp{Ok: ok, Msg: msg}    // formateamos respuesta
-	rJSON, err := json.Marshal(&r) // codificamos en JSON
-	Chk(err)                       // comprobamos error
-	w.Write(rJSON)                 // escribimos el JSON resultante
+func Response(w io.Writer, ok bool, msg string, token []byte) {
+	r := Resp{Ok: ok, Msg: msg, Token: token} // formateamos respuesta
+	rJSON, err := json.Marshal(&r)            // codificamos en JSON
+	Chk(err)                                  // comprobamos error
+	w.Write(rJSON)                            // escribimos el JSON resultante
 }
 
 // función para cifrar (AES-CTR 256), adjunta el IV al principio

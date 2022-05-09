@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	s "sds/servidor/signs"
 	u "sds/util"
 )
 
@@ -13,6 +14,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	switch req.Form.Get("cmd") { //Comprobamos el comando desde el cliente
 	case "signup":
 		fmt.Println("El cliente ha seleccionado REGISTRO")
+		s.Signup(w, req)
 	case "signin":
 		fmt.Println("El cliente ha seleccionado LOGIN")
 	default:
@@ -21,6 +23,9 @@ func handler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+
+	u.Gusers = make(map[string]u.User)
+
 	fmt.Println("Bienvenido al sistema de SDS")
 	fmt.Println("Te encuentras ejecutando el SERVIDOR")
 	fmt.Println("------------------------------------")

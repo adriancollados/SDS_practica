@@ -1,23 +1,22 @@
 package signs
 
 import (
-	"fmt"
 	"net/http"
 	m "sds/util"
 )
 
 func Signup(w http.ResponseWriter, req *http.Request) {
-	u := m.User{}
-
-	u.Name = req.Form.Get("user")
-
-	_, ok := m.Gusers[u.Name]
+	_, ok := m.Gusers[req.Form.Get("user")]
 
 	if ok {
-		m.Response(w, false, "Ya existe el usuario")
-	} else {
-		m.Gusers[u.Name] = u
-		fmt.Println("Guardado")
-		m.Response(w, true, "Usuario registrado con éxito")
+		m.Response(w, false, "Ya existe el usuario", nil)
+		return
 	}
+
+	u := m.User{}
+	u.Name = req.Form.Get("user")
+
+	m.Gusers[u.Name] = u
+	m.Response(w, true, "Usuario Registrado", nil)
+
 }

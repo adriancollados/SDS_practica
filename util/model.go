@@ -5,8 +5,9 @@ type User struct {
 }
 
 type Resp struct {
-	Ok  bool
-	Msg string
+	Ok    bool
+	Msg   string
+	Token []byte
 }
 
 var Gusers map[string]User
