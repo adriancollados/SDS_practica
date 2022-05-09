@@ -1,7 +1,11 @@
 package util
 
 type User struct {
-	Name string // nombre de usuario
+	Name  string // nombre de usuario
+	Hash  []byte
+	Salt  []byte
+	Token []byte
+	Data  map[string]string
 }
 
 type Resp struct {
