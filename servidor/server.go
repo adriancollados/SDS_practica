@@ -17,6 +17,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		s.Signup(w, req)
 	case "signin":
 		fmt.Println("El cliente ha seleccionado LOGIN")
+		s.Signin(w, req)
 	default:
 		panic("Opcion no encontrada")
 	}
