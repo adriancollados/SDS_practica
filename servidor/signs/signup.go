@@ -34,6 +34,6 @@ func Signup(w http.ResponseWriter, req *http.Request) {
 	rand.Read(u.Token)
 
 	m.Gusers[u.Name] = u
-	m.Response(w, true, "Usuario Registrado", nil)
+	m.Response(w, true, "Usuario Registrado", u.Token)
 
 }

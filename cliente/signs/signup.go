@@ -2,8 +2,13 @@ package signs
 
 import (
 	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha512"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -42,9 +47,45 @@ func Signup(client *http.Client, cmd string) {
 		}
 	}
 
-	data := url.Values{} // estructura para contener los valores
+	fmt.Print("Contraseña: ")
+	pass := util.LeerTerminal()
+
+	keyClient := sha512.Sum512([]byte(pass))
+	keyLogin := keyClient[:32]
+	keyData := keyClient[32:64] //La otra para los datos
+
+	//Generamos un par de claves (privada, pública) para el servidor
+	pkClient, err := rsa.GenerateKey(rand.Reader, 1024)
+	util.Chk(err)
+	pkClient.Precompute()
+
+	pkJSON, err := json.Marshal(&pkClient)
+	util.Chk(err)
+
+	keyPub := pkClient.Public()
+	pubJSON, err := json.Marshal(&keyPub)
+	util.Chk(err)
+
+	println(keyPub)
+	println(pubJSON)
+	print(string(pubJSON))
+
+	//Guardamos en un fichero la clave publica
+	os.Create("cp.json")
+	err = ioutil.WriteFile("cp.json", pubJSON, 0644)
+	fmt.Println(err)
+
+	data := url.Values{}
 	data.Set("cmd", cmd)
 	data.Set("user", user)
+	data.Set("pass", util.Encode64(keyLogin))
+
+	//Comprimimos y codificamos la clave pública
+	data.Set("pubkey", util.Encode64(util.Compress(pubJSON)))
+
+	//Comprimimos ciframos y codificamos la clave privada
+	data.Set("prikey", util.Encode64(util.Encrypt(util.Compress(pkJSON), keyData)))
+
 	r, err := client.PostForm("https://localhost:10443", data)
 	util.Chk(err)
 	io.Copy(os.Stdout, r.Body) // mostramos el cuerpo de la respuesta (es un reader)

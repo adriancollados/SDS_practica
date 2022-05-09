@@ -21,7 +21,7 @@ func main() {
 		Operation string `arg:"positional, required" help:"(signup|signin)"`
 	}
 	fmt.Println("**")
-	fmt.Println("** Bienvenido al sistema de Foros de la asignatura de SDS en 20/21 ")
+	fmt.Println("** Bienvenido al sistema de SDS en 21/22 ")
 	fmt.Println("**")
 
 	parser := arg.MustParse(&args)
