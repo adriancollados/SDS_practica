@@ -4,14 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	u "sds/util"
 )
-
-// función para comprobar errores (ahorra escritura)
-func chk(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
 
 func Signin(client *http.Client, cmd string) {
 	fmt.Println("Loggear un usuario")
@@ -20,6 +14,6 @@ func Signin(client *http.Client, cmd string) {
 	data := url.Values{} // estructura para contener los valores
 	data.Set("cmd", cmd)
 	r, err := client.PostForm("https://localhost:10443", data)
-	chk(err)
+	u.Chk(err)
 	fmt.Println(r)
 }

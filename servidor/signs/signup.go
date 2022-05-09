@@ -6,7 +6,7 @@ import (
 	m "sds/util"
 )
 
-func signup(w http.ResponseWriter, req *http.Request) {
+func Signup(w http.ResponseWriter, req *http.Request) {
 	u := m.User{}
 
 	u.Name = req.Form.Get("user")
@@ -14,7 +14,6 @@ func signup(w http.ResponseWriter, req *http.Request) {
 	_, ok := m.Gusers[u.Name]
 
 	if ok {
-
 		m.Response(w, false, "Ya existe el usuario")
 	} else {
 		m.Gusers[u.Name] = u

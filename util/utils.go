@@ -4,6 +4,7 @@ Funciones comunes y utilidades
 package util
 
 import (
+	"bufio"
 	"bytes"
 	"compress/zlib"
 	"crypto/aes"
@@ -12,6 +13,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"os"
+	"strings"
 )
 
 // Chk comprueba y sale si hay errores (ahorra escritura en programas sencillos)
@@ -80,4 +83,11 @@ func Decode64(s string) []byte {
 	b, err := base64.StdEncoding.DecodeString(s) // recupera el formato original
 	Chk(err)                                     // comprobamos el error
 	return b                                     // devolvemos los datos originales
+}
+
+func LeerTerminal() string {
+	text := bufio.NewReader(os.Stdin)
+	read, _ := text.ReadString('\n')
+	tipo := strings.TrimRight(read, "\r\n")
+	return tipo
 }
