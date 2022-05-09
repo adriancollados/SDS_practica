@@ -31,15 +31,19 @@ func Signin(client *http.Client, cmd string) {
 	data.Set("cmd", cmd)                      // comando (string)
 	data.Set("user", user)                    // usuario (string)
 	data.Set("pass", util.Encode64(keyLogin)) // "contraseña" a base64
+
 	r, err := client.PostForm("https://localhost:10443", data)
+	fmt.Println("/n")
+	fmt.Println(r)
+	fmt.Println("/n")
 	util.Chk(err)
+
 	io.Copy(os.Stdout, r.Body) // mostramos el cuerpo de la respuesta (es un reader)
-	r.Body.Close()             // hay que cerrar el reader del body
+
 	resp := util.Resp{}
 	byteValue, _ := ioutil.ReadAll(r.Body)
-	fmt.Println(byteValue)
+	r.Body.Close()
 	json.Unmarshal([]byte(byteValue), &resp)
-	fmt.Print(resp)
-	fmt.Println("unmarshal")
+
 	Opciones(resp)
 }
