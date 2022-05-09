@@ -2,8 +2,10 @@ package signs
 
 import (
 	"crypto/sha512"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -33,5 +35,11 @@ func Signin(client *http.Client, cmd string) {
 	util.Chk(err)
 	io.Copy(os.Stdout, r.Body) // mostramos el cuerpo de la respuesta (es un reader)
 	r.Body.Close()             // hay que cerrar el reader del body
-	fmt.Println()
+	resp := util.Resp{}
+	byteValue, _ := ioutil.ReadAll(r.Body)
+	fmt.Println(byteValue)
+	json.Unmarshal([]byte(byteValue), &resp)
+	fmt.Print(resp)
+	fmt.Println("unmarshal")
+	Opciones(resp)
 }

@@ -1,20 +1,13 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"os"
 	s "sds/cliente/signs"
+	m "sds/util"
 
 	"github.com/alexflint/go-arg"
 )
-
-//Cliente global
-var tr = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-}
-var client = &http.Client{Transport: tr}
 
 func main() {
 	var args struct {
@@ -28,9 +21,9 @@ func main() {
 
 	switch args.Operation {
 	case "signup":
-		s.Signup(client, "signup")
+		s.Signup(m.Client, "signup")
 	case "signin":
-		s.Signin(client, "signin")
+		s.Signin(m.Client, "signin")
 	case "help":
 		parser.WriteHelp(os.Stdin)
 	default:

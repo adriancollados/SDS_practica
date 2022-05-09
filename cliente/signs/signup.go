@@ -66,9 +66,9 @@ func Signup(client *http.Client, cmd string) {
 	pubJSON, err := json.Marshal(&keyPub)
 	util.Chk(err)
 
-	println(keyPub)
-	println(pubJSON)
-	print(string(pubJSON))
+	// println(keyPub)
+	// println(pubJSON)
+	// print(string(pubJSON))
 
 	//Guardamos en un fichero la clave publica
 	os.Create("cp.json")

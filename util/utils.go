@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -85,9 +86,16 @@ func Decode64(s string) []byte {
 	return b                                     // devolvemos los datos originales
 }
 
+//funcion para leer el terminal
 func LeerTerminal() string {
 	text := bufio.NewReader(os.Stdin)
 	read, _ := text.ReadString('\n')
 	tipo := strings.TrimRight(read, "\r\n")
 	return tipo
+}
+
+//Funcion para pasar de string a int
+func StringAInt(s string) int64 {
+	number, _ := strconv.ParseInt(s, 10, 0)
+	return number
 }
