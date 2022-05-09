@@ -1,11 +1,13 @@
-package server
+package main
 
 import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"sdsGrupal/server/models"
 	"sdsGrupal/util"
 	"time"
 
@@ -18,40 +20,26 @@ func comprueba(e error) {
 	}
 }
 
-type usuario struct {
-	Nombre      string
-	Username    string
-	Email       string
-	Hash        []byte
-	Sal         []byte
-	Token       []byte
-	Ultconexion time.Time
-}
-
-var usuarios map[string]usuario
-
-type Resp struct {
-	Correcto bool
-	Mensaje  string
-	Token    []byte
-}
+var usuarios map[string]models.Usuario
 
 func respuesta(w io.Writer, correcto bool, mensaje string, token []byte) {
-	r := Resp{Correcto: correcto, Mensaje: mensaje, Token: token}
+	r := models.Resp{Correcto: correcto, Mensaje: mensaje, Token: token}
 	rJSON, err := json.Marshal(&r)
 	comprueba(err)
 	w.Write(rJSON)
 }
 
-func Run() {
-	usuarios = make(map[string]usuario) //inicializamos el mapa de usuarios
+func main() {
+	usuarios = make(map[string]models.Usuario) //inicializamos el mapa de usuarios
 
 	http.HandleFunc("/", handler)
 
-	comprueba(http.ListenAndServeTLS(":9090", "localhost.crt", "localhost.key", nil))
+	comprueba(http.ListenAndServeTLS(":9090", "../localhost.crt", "../localhost.key", nil))
 }
 
 func handler(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("Servidor conectado")
+	fmt.Println("------------------------------------------")
 	req.ParseForm()
 	w.Header().Set("Content-type", "text/plain")
 
@@ -62,7 +50,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 			respuesta(w, false, "Usuario ya registrado", nil)
 			return
 		}
-		u := usuario{}
+		u := models.Usuario{}
 		u.Nombre = req.Form.Get("usuario")
 
 		u.Sal = make([]byte, 16)

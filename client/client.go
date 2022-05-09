@@ -1,4 +1,4 @@
-package client
+package main
 
 import (
 	"crypto/rand"
@@ -11,19 +11,19 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	usr "sdsGrupal/client/operaciones"
-	"sdsGrupal/server"
+	"sdsGrupal/server/models"
 	"sdsGrupal/util"
+
+	arg "github.com/alexflint/go-arg"
 )
 
 func comprueba(e error) {
-	usr.Registro()
 	if e != nil {
 		panic(e)
 	}
 }
 
-func Run() {
+func main() {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -47,14 +47,16 @@ func Run() {
 	comprueba(err)
 
 	var args struct {
-		operacion string   `arg:"positional, required" help:"(registro|login|subir|help)`
+		operacion string   `arg:"positional, required" help:"(registro|login|subir|help)"`
 		tranferir []string `arg:"positional" help:"(list|((upload|download|remove) <files>...)"`
 	}
+
+	parser := arg.MustParse(&args)
 
 	switch args.operacion {
 	case "registro":
 		data := url.Values{}                      // estructura para contener los valores
-		data.Set("cmd", "register")               // comando (string)
+		data.Set("cmd", "registro")               // comando (string)
 		data.Set("user", "usuario")               // usuario (string)
 		data.Set("pass", util.Encode64(keyLogin)) // "contraseña" a base64
 
@@ -77,13 +79,16 @@ func Run() {
 		data.Set("pass", util.Encode64(keyLogin))                   // contraseña (a base64 porque es []byte)
 		r, err := cliente.PostForm("https://localhost:10443", data) // enviamos por POST
 		comprueba(err)
-		resp := server.Resp{}
+		resp := models.Resp{}
 		json.NewDecoder(r.Body).Decode(&resp) // decodificamos la respuesta para utilizar sus campos más adelante
 		fmt.Println(resp)                     // imprimimos por pantalla
 		r.Body.Close()
 
 	case "subir":
 		//codigo para transferir archivos
+
+	case "help":
+		parser.WriteHelp(os.Stdin)
 	default:
 		panic("Algo ha fallado")
 	}

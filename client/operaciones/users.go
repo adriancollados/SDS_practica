@@ -1,5 +1,1 @@
 package operaciones
-
-func Registro() {
-
-}
