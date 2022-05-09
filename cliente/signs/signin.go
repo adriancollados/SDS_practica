@@ -40,6 +40,8 @@ func Signin(client *http.Client, cmd string) {
 
 	io.Copy(os.Stdout, r.Body) // mostramos el cuerpo de la respuesta (es un reader)
 
+	//https://forum.golangbridge.org/t/ioutil-readall-return-type/3237/2
+
 	resp := util.Resp{}
 	byteValue, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
