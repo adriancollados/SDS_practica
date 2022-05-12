@@ -4,11 +4,9 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	util "sds/util"
 )
 
@@ -33,19 +31,16 @@ func Signin(client *http.Client, cmd string) {
 	data.Set("pass", util.Encode64(keyLogin)) // "contraseña" a base64
 
 	r, err := client.PostForm("https://localhost:10443", data)
-	fmt.Println("/n")
-	fmt.Println(r)
-	fmt.Println("/n")
 	util.Chk(err)
 
-	io.Copy(os.Stdout, r.Body) // mostramos el cuerpo de la respuesta (es un reader)
+	//io.Copy(os.Stdout, r.Body) // mostramos el cuerpo de la respuesta (es un reader)
 
 	//https://forum.golangbridge.org/t/ioutil-readall-return-type/3237/2
 
 	resp := util.Resp{}
 	byteValue, _ := ioutil.ReadAll(r.Body)
-	r.Body.Close()
-	json.Unmarshal([]byte(byteValue), &resp)
-
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+	fmt.Println(resp)
 	Opciones(resp)
 }

@@ -18,6 +18,7 @@ import (
 
 var Claves map[string]crypto.PublicKey
 
+//esto se puede cambiar por una funcion del paquete de string
 var caracteresInvalidos = map[int]string{0: "!", 1: "\"", 2: "#", 3: "$", 4: "%", 5: "&", 6: "(", 7: ")",
 	8: "*", 9: "+", 10: ",", 11: "-", 12: ".", 13: "/", 14: ":", 15: ";", 16: "<", 17: "=",
 	18: ">", 19: "?", 20: "@", 21: "[", 22: "\\", 23: "]", 24: "_", 25: "{", 26: "|", 27: "}",
@@ -71,8 +72,9 @@ func Signup(client *http.Client, cmd string) {
 	// print(string(pubJSON))
 
 	//Guardamos en un fichero la clave publica
-	os.Create("cp.json")
-	err = ioutil.WriteFile("cp.json", pubJSON, 0644)
+	//os.Create("cp.json")
+	//se puede cambiar por os.WriteFile
+	err = ioutil.WriteFile("cp.json", pubJSON, 0666)
 	fmt.Println(err)
 
 	data := url.Values{}
