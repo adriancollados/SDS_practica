@@ -13,10 +13,10 @@ func handler(w http.ResponseWriter, req *http.Request) {
 
 	switch req.Form.Get("cmd") { //Comprobamos el comando desde el cliente
 	case "signup":
-		fmt.Println("El cliente ha seleccionado REGISTRO")
+		fmt.Println("Se ha seleccionado REGISTRO")
 		s.Signup(w, req)
 	case "signin":
-		fmt.Println("El cliente ha seleccionado LOGIN")
+		fmt.Println("Se ha seleccionado LOGIN")
 		s.Signin(w, req)
 	default:
 		panic("Opcion no encontrada")
@@ -27,9 +27,10 @@ func main() {
 
 	u.Gusers = make(map[string]u.User)
 
-	fmt.Println("Bienvenido al sistema de SDS")
-	fmt.Println("Te encuentras ejecutando el SERVIDOR")
 	fmt.Println("------------------------------------")
+	fmt.Println("Bienvenido al sistema de SDS")
+	fmt.Println("------------------------------------")
+	fmt.Println("El SERVIDOR se ha iniciado...")
 	// fmt.Print("Dime la contraseña del servidor: ")
 	// key := leerTerminal()
 	// data := sha512.Sum512([]byte(key))

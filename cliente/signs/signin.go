@@ -41,6 +41,6 @@ func Signin(client *http.Client, cmd string) {
 	byteValue, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	json.Unmarshal(byteValue, &resp)
-	fmt.Println(resp)
+	fmt.Println(resp.Msg)
 	Opciones(resp)
 }

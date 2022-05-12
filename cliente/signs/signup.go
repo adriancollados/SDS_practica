@@ -7,11 +7,9 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	util "sds/util"
 	"strings"
 )
@@ -32,7 +30,7 @@ func Signup(client *http.Client, cmd string) {
 	fmt.Println("--------------------")
 
 	nombreCorrecto := false
-	fmt.Print("Nombre de usuario: ")
+	fmt.Print("Introduzca un nombre de usuario: ")
 	user := util.LeerTerminal()
 
 	for !nombreCorrecto {
@@ -48,8 +46,9 @@ func Signup(client *http.Client, cmd string) {
 		}
 	}
 
-	fmt.Print("Contraseña: ")
+	fmt.Print("Introduzca su contraseña: ")
 	pass := util.LeerTerminal()
+	fmt.Println()
 
 	keyClient := sha512.Sum512([]byte(pass))
 	keyLogin := keyClient[:32]
@@ -75,7 +74,9 @@ func Signup(client *http.Client, cmd string) {
 	//os.Create("cp.json")
 	//se puede cambiar por os.WriteFile
 	err = ioutil.WriteFile("cp.json", pubJSON, 0666)
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	data := url.Values{}
 	data.Set("cmd", cmd)
@@ -90,7 +91,11 @@ func Signup(client *http.Client, cmd string) {
 
 	r, err := client.PostForm("https://localhost:10443", data)
 	util.Chk(err)
-	io.Copy(os.Stdout, r.Body) // mostramos el cuerpo de la respuesta (es un reader)
-	r.Body.Close()             // hay que cerrar el reader del body
-	fmt.Println()
+
+	resp := util.Resp{}
+	byteValue, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+
+	fmt.Println(resp.Msg)
 }
