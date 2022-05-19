@@ -2,6 +2,7 @@ package signs
 
 import (
 	"fmt"
+	f "sds/cliente/fich"
 	u "sds/util"
 )
 
@@ -22,7 +23,12 @@ func Opciones(resp u.Resp) {
 
 			switch option {
 			case 1:
-				fmt.Println("comienza la subida de archivo")
+				fmt.Println("Se ha seleccionado SUBIR ARCHIVO")
+				fmt.Println("--------------------------------")
+				fmt.Print("Introduzca el nombre del fichero que desea subir: ")
+				filename := u.LeerTerminal()
+
+				f.Fichup(filename)
 			case 2:
 				fmt.Println("comienza la bajada de archivo")
 			case 3:
