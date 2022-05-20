@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	s "sds/cliente/signs"
+	"sds/util"
 	m "sds/util"
 )
 
@@ -27,6 +28,7 @@ func main() {
 			case "2":
 				s.Signin(m.Client, "signin")
 			case "3":
+				util.TokenSesion = nil
 				fmt.Println("\n¡Hasta luego!")
 				return
 			}
