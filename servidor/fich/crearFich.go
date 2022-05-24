@@ -34,10 +34,10 @@ func CrearFich(w http.ResponseWriter, req *http.Request) {
 		jsonF, err := json.Marshal(&Fich)
 		u.Chk(err)
 
-		//Encriptamos el json de los temas con el codigo de la contraseña del server
+		//Encriptamos el json de los ficheros con el codigo de la contraseña del server
 		var jsonFD = jsonF
 
-		err = ioutil.WriteFile("fichero.json", jsonFD, 0644)
+		err = ioutil.WriteFile("ficheros.json", jsonFD, 0644)
 		u.Chk(err)
 		u.Response(w, true, "Fichero creado correctamente", u.TokenSesion)
 	}

@@ -27,7 +27,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("Se ha seleccionado Subir Fichero")
 		f.Fichup(w, req)
 	case "crearFichero":
-		fmt.Println("Se ha seleccionado Subir Fichero")
+		fmt.Println("Se ha seleccionado Crear Fichero")
 		f.CrearFich(w, req)
 	default:
 		panic("Opcion no encontrada")
@@ -37,6 +37,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 func main() {
 
 	u.Gusers = make(map[string]u.User)
+	u.GFicheros = make(map[string]u.Fichero)
 
 	fmt.Println("------------------------------------")
 	fmt.Println("Bienvenido al sistema de SDS")
