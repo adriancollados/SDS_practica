@@ -23,6 +23,11 @@ type User struct {
 	Data  map[string]string
 }
 
+type UsersRegistrados struct {
+	Key   []byte
+	Users map[string]User
+}
+
 type Resp struct {
 	Ok    bool
 	Msg   string

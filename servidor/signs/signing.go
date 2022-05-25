@@ -12,7 +12,7 @@ import (
 func Signin(w http.ResponseWriter, req *http.Request) {
 	u, ok := m.Gusers[req.Form.Get("user")] // ¿existe ya el usuario?
 	if !ok {
-		m.Response(w, false, "\nERROR: Este usuario no existe en la base de datos", nil)
+		m.Response(w, false, "\nERROR: io no existe en la base de datos", nil)
 		return
 	}
 

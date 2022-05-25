@@ -149,8 +149,9 @@ func Signup(client *http.Client, cmd string) {
 	byteValue, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	json.Unmarshal(byteValue, &resp)
-
-	fmt.Println(resp.Msg)
+	if resp.Ok {
+		fmt.Println(resp.Msg)
+	}
 }
 
 ///////////////////////////////////////////
@@ -194,8 +195,11 @@ func Signin(client *http.Client, cmd string) {
 	byteValue, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	json.Unmarshal(byteValue, &resp)
-	fmt.Println(resp.Msg)
-	u.TokenSesion = resp.Token
+
+	if resp.Ok {
+		fmt.Println(resp.Msg)
+		u.TokenSesion = resp.Token
+	}
 	Opciones(resp)
 }
 
@@ -240,7 +244,7 @@ func CrearFich(cmd string) {
 	resp := u.Resp{}
 	byteValue, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal([]byte(byteValue), &resp)
-	u.GFicheros = make(map[string]u.Fichero)
+	// u.GFicheros = make(map[string]u.Fichero)
 	fmt.Println("Fichero creado")
 	fmt.Println("------------------------")
 	Opciones(resp)
@@ -263,6 +267,7 @@ func Fichup(filename string, cmd string) {
 		data := url.Values{}
 		data.Set("cmd", cmd) // comando (string)
 		data.Set("fichero", filename)
+		data.Set("user", u.Encode64(UserLog.Key))
 
 		resp, err := u.Client.PostForm("https://localhost:10443", data)
 		u.Chk(err)
@@ -287,22 +292,55 @@ func isExist(path string) bool {
 }
 
 ///////////////////////////////////////////
-///////				SIGNIN			///////
+///////			LEERFICH			///////
 ///////////////////////////////////////////
+
+func LeerFich(cmd string, filename string) {
+	fmt.Println("Leyendo fichero ...")
+	fmt.Println("------------------------")
+
+	if u.GFicheros == nil {
+		u.GFicheros = make(map[string]u.Fichero)
+	}
+
+	data := url.Values{}
+	data.Set("cmd", cmd)
+	data.Set("filename", filename)
+	data.Set("user", u.Encode64(UserLog.Key))
+
+	r, err := u.Client.PostForm("https://localhost:10443", data)
+	u.Chk(err)
+
+	resp := u.Resp{}
+	byteValue, _ := ioutil.ReadAll(r.Body)
+	json.Unmarshal([]byte(byteValue), &resp)
+
+	var fich = u.Fichero{}
+	json.Unmarshal([]byte(resp.Msg), &fich.Content)
+
+	if resp.Ok {
+		fmt.Println("Nombre del fichero: " + filename)
+		fmt.Println("Contenido: " + resp.Msg)
+	} //else {
+	// 	fmt.Println(resp.Msg)
+	// }
+
+	Opciones(resp)
+}
 
 ///////////////////////////////////////////
 ///////				Menu			///////
 ///////////////////////////////////////////
 func Opciones(resp u.Resp) {
 	if !resp.Ok {
-		fmt.Println("Salir")
+		fmt.Println(resp.Msg)
 		return
 	} else {
 		for {
 			fmt.Println("\n---- MENÚ PRINCIPAL ----")
-			fmt.Println("1. Subir archivo")
-			fmt.Println("2. Bajar archivo")
-			fmt.Println("3. Crear archivo")
+			fmt.Println("1. Crear archivo")
+			fmt.Println("2. Leer archivo")
+			fmt.Println("3. Subir archivo")
 			fmt.Println("4. Cerrar sesión")
 			fmt.Println("------------------------")
 			fmt.Print("¿Qué opción desea realizar? ")
@@ -311,18 +349,22 @@ func Opciones(resp u.Resp) {
 
 			switch option {
 			case 1:
+				fmt.Println("Se ha seleccionado CREAR ARCHIVO")
+				fmt.Println("--------------------------------")
+				CrearFich("crearFichero")
+			case 2:
+				fmt.Println("Se ha seleccionado LEER ARCHIVO")
+				fmt.Println("--------------------------------")
+				fmt.Print("Introduzca el nombre del fichero que desea ver: ")
+				filename := u.LeerTerminal()
+				LeerFich("leerFichero", filename)
+			case 3:
 				fmt.Println("Se ha seleccionado SUBIR ARCHIVO")
 				fmt.Println("--------------------------------")
 				fmt.Print("Introduzca el nombre del fichero que desea subir: ")
 				filename := u.LeerTerminal()
 
 				Fichup(filename, "subirFichero")
-			case 2:
-				fmt.Println("comienza la bajada de archivo")
-			case 3:
-				fmt.Println("Se ha seleccionado CREAR ARCHIVO")
-				fmt.Println("--------------------------------")
-				CrearFich("crearFichero")
 			case 4:
 				fmt.Println("\n¡Hasta luego!")
 				return

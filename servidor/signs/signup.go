@@ -2,7 +2,10 @@ package signs
 
 import (
 	"crypto/rand"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"os"
 	m "sds/util"
 
 	"golang.org/x/crypto/argon2"
@@ -34,6 +37,20 @@ func Signup(w http.ResponseWriter, req *http.Request) {
 	rand.Read(u.Token)
 
 	m.Gusers[u.Name] = u
+	var code []byte = nil
+	User := m.UsersRegistrados{Key: code, Users: m.Gusers}
+	User.Key = m.Codee
+	User.Users = m.Gusers
+	os.Remove("users.json")
+	_, err := os.Create("users.json")
+	m.Chk(err)
+	jsonF, err := json.Marshal(&User)
+	m.Chk(err)
+	//Encriptamos el json de los ficheros con el codigo de la contraseña del server
+	var jsonFD = jsonF
+
+	err = ioutil.WriteFile("users.json", jsonFD, 0644)
+	m.Chk(err)
 	m.Response(w, true, "\n¡Usuario registrado correctamente!", u.Token)
 
 }
