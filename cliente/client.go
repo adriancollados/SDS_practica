@@ -232,7 +232,6 @@ func CrearFich(cmd string) {
 	jsonData, err := json.Marshal(&f)
 	u.Chk(err)
 	jsonData = []byte(u.Encode64(u.Encrypt(jsonData, UserLog.Key)))
-
 	data := url.Values{}
 	data.Set("cmd", cmd)
 	data.Set("fich", string(jsonData))
