@@ -27,6 +27,9 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	case "leerFichero":
 		fmt.Println("Se ha seleccionado Leer Fichero")
 		f.LeerFich(w, req)
+	case "listarFicheros":
+		fmt.Println("Se ha seleccionado Listar Ficheros")
+		f.ListarFich(w, req)
 	// case "bajarFichero":
 	// 	fmt.Println("Se ha seleccionado Subir Fichero")
 	// 	f.Fichup(w, req)

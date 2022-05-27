@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -180,9 +181,6 @@ func Signin(client *http.Client, cmd string) {
 	keyLogin := keyClient[:32]  // una mitad para el login (256 bits)
 	keyData := keyClient[32:64] // la otra para los datos (256 bits)
 
-	UserLog.Name = user
-	UserLog.Key = keyData
-
 	data := url.Values{}                   // estructura para contener los valores
 	data.Set("cmd", cmd)                   // comando (string)
 	data.Set("user", user)                 // usuario (string)
@@ -199,6 +197,8 @@ func Signin(client *http.Client, cmd string) {
 	if resp.Ok {
 		fmt.Println(resp.Msg)
 		u.TokenSesion = resp.Token
+		UserLog.Name = user
+		UserLog.Key = keyData
 	}
 	Opciones(resp)
 }
@@ -211,41 +211,45 @@ func CrearFich(cmd string) {
 	fmt.Println("Creando fichero ...")
 	fmt.Println("------------------------")
 
-	if u.GFicheros == nil {
-		u.GFicheros = make(map[string]u.Fichero)
-	}
-
 	f := u.Fichero{}
 	fmt.Println("Nombre del fichero: ")
-	f.Name = u.LeerTerminal()
+	id := u.LeerTerminal()
+	f.Name = []byte(id)
 	fmt.Println("Contenido del fichero: ")
 	f.Content = []byte(u.LeerTerminal())
 	f.HashUser = UserLog.Key
 
-	_, ok := u.GFicheros[f.Name]
-	if ok {
-		fmt.Println("El fichero ya existe")
-	} else {
-		u.GFicheros[f.Name] = f
+	jsonName := u.Encode64(u.Encrypt([]byte(f.Name), UserLog.Key))
+	var aux = string(u.Decode64(jsonName))
+	var entra = false
+	for ok := true; ok; ok = strings.ContainsAny(aux, "/") {
+		aux = u.Encode64(u.Encrypt([]byte(f.Name), UserLog.Key))
+		entra = true
 	}
+	if entra {
+		jsonName = aux
+	}
+	jsonContent := u.Encode64(u.Encrypt(f.Content, UserLog.Key))
+	jsonHash := u.Encode64(u.Encrypt(f.HashUser, UserLog.Key))
 
-	jsonData, err := json.Marshal(&f)
-	u.Chk(err)
-	jsonData = []byte(u.Encode64(u.Encrypt(jsonData, UserLog.Key)))
 	data := url.Values{}
 	data.Set("cmd", cmd)
-	data.Set("fich", string(jsonData))
-	data.Set("user", string(UserLog.Key))
+	data.Set("id", id)
+	data.Set("name", jsonName)
+	data.Set("content", jsonContent)
+	data.Set("hash", jsonHash)
 
 	r, err := u.Client.PostForm("https://localhost:10443", data)
 	u.Chk(err)
 
 	resp := u.Resp{}
 	byteValue, _ := ioutil.ReadAll(r.Body)
-	json.Unmarshal([]byte(byteValue), &resp)
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+	if resp.Ok {
+		fmt.Println(resp.Msg)
+	}
 	// u.GFicheros = make(map[string]u.Fichero)
-	fmt.Println("Fichero creado")
-	fmt.Println("------------------------")
 	Opciones(resp)
 }
 
@@ -298,32 +302,66 @@ func LeerFich(cmd string, filename string) {
 	fmt.Println("Leyendo fichero ...")
 	fmt.Println("------------------------")
 
-	if u.GFicheros == nil {
-		u.GFicheros = make(map[string]u.Fichero)
-	}
-
 	data := url.Values{}
 	data.Set("cmd", cmd)
 	data.Set("filename", filename)
-	data.Set("user", u.Encode64(UserLog.Key))
 
 	r, err := u.Client.PostForm("https://localhost:10443", data)
 	u.Chk(err)
 
 	resp := u.Resp{}
 	byteValue, _ := ioutil.ReadAll(r.Body)
-	json.Unmarshal([]byte(byteValue), &resp)
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+	var f = u.Fichero{}
+	json.Unmarshal(u.Decode64(resp.Msg), &f)
 
-	var fich = u.Fichero{}
-	json.Unmarshal([]byte(resp.Msg), &fich.Content)
+	hash := u.Decrypt(f.HashUser, UserLog.Key)
+	content := u.Decrypt(f.Content, UserLog.Key)
 
 	if resp.Ok {
-		fmt.Println("Nombre del fichero: " + filename)
-		fmt.Println("Contenido: " + resp.Msg)
-	} //else {
-	// 	fmt.Println(resp.Msg)
-	// }
+		if bytes.Equal(hash, UserLog.Key) {
+			fmt.Println("Nombre del fichero: " + filename)
+			fmt.Println("Contenido: " + string(content))
+		} else {
+			fmt.Println("ERROR: No tiene permisos para leer el fichero")
+		}
+	}
+	Opciones(resp)
+}
 
+///////////////////////////////////////////
+///////			ListarFICH			///////
+///////////////////////////////////////////
+
+func ListarFich(cmd string) {
+	fmt.Println("Leyendo fichero ...")
+	fmt.Println("------------------------")
+
+	data := url.Values{}
+	data.Set("cmd", cmd)
+
+	r, err := u.Client.PostForm("https://localhost:10443", data)
+	u.Chk(err)
+
+	resp := u.Resp{}
+	byteValue, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+	f := u.FicherosRegistrados{}
+	json.Unmarshal(u.Decode64(resp.Msg), &f)
+
+	ficheros := f.Ficheros
+
+	if resp.Ok {
+		fmt.Println("Ficheros de " + UserLog.Name)
+		for fich := range ficheros {
+			hash := u.Decrypt(ficheros[fich].HashUser, UserLog.Key)
+			if bytes.Equal(hash, UserLog.Key) {
+				fmt.Println("- " + fich)
+			}
+		}
+	}
 	Opciones(resp)
 }
 
@@ -338,9 +376,11 @@ func Opciones(resp u.Resp) {
 		for {
 			fmt.Println("\n---- MENÚ PRINCIPAL ----")
 			fmt.Println("1. Crear archivo")
-			fmt.Println("2. Leer archivo")
-			fmt.Println("3. Subir archivo")
-			fmt.Println("4. Cerrar sesión")
+			fmt.Println("2. Listar mis archivos")
+			fmt.Println("3. Leer archivo")
+			fmt.Println("4. Subir archivo")
+			fmt.Println("5. Eliminar archivo")
+			fmt.Println("6. Cerrar sesión")
 			fmt.Println("------------------------")
 			fmt.Print("¿Qué opción desea realizar? ")
 			option := u.StringAInt(u.LeerTerminal())
@@ -352,19 +392,29 @@ func Opciones(resp u.Resp) {
 				fmt.Println("--------------------------------")
 				CrearFich("crearFichero")
 			case 2:
+				fmt.Println("Se ha seleccionado LISTAR MIS ARCHIVOS")
+				fmt.Println("--------------------------------")
+				ListarFich("listarFicheros")
+			case 3:
 				fmt.Println("Se ha seleccionado LEER ARCHIVO")
 				fmt.Println("--------------------------------")
 				fmt.Print("Introduzca el nombre del fichero que desea ver: ")
 				filename := u.LeerTerminal()
 				LeerFich("leerFichero", filename)
-			case 3:
+			case 4:
+				fmt.Println("Se ha seleccionado SUBIR ARCHIVO")
+				fmt.Println("--------------------------------")
+				fmt.Print("Introduzca el nombre del fichero que desea subir: ")
+				//filename := u.LeerTerminal()
+
+			case 5:
 				fmt.Println("Se ha seleccionado SUBIR ARCHIVO")
 				fmt.Println("--------------------------------")
 				fmt.Print("Introduzca el nombre del fichero que desea subir: ")
 				filename := u.LeerTerminal()
 
 				Fichup(filename, "subirFichero")
-			case 4:
+			case 6:
 				fmt.Println("\n¡Hasta luego!")
 				return
 			default:

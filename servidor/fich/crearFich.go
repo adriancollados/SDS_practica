@@ -11,53 +11,40 @@ import (
 func CrearFich(w http.ResponseWriter, req *http.Request) {
 
 	if req != nil {
+		_, ok := u.GFicheros[req.Form.Get("id")] // ¿existe ya el usuario?
+		if ok {
+			u.Response(w, false, "\nERROR: Ya existe en la base de datos", nil)
+			return
+		} else {
+			var f u.Fichero
 
-		desencryp := u.Decode64(req.Form.Get("fich"))
-		user := u.Decrypt([]byte(desencryp), []byte(req.Form.Get("user")))
+			f.Name = u.Decode64(req.Form.Get("name"))
+			f.HashUser = u.Decode64(req.Form.Get("hash"))
+			f.Content = u.Decode64(req.Form.Get("content"))
+			u.GFicheros[req.Form.Get("id")] = f
 
-		jsonString := (string(user))
-		var f u.Fichero
-		if err := json.Unmarshal([]byte(jsonString), &f); err != nil {
-			panic(err)
+			var code []byte = nil
+			Fich := u.FicherosRegistrados{Key: code, Ficheros: u.GFicheros}
+			Fich.Key = u.Codee
+			Fich.Ficheros = u.GFicheros
+			os.Remove("ficheros.json")
+			_, err := os.Create("ficheros.json")
+			u.Chk(err)
+			jsonF, err := json.Marshal(&Fich)
+			u.Chk(err)
+
+			createFile, err := os.Create("../archivos/subidos/" + req.Form.Get("name"))
+			u.Chk(err)
+			defer createFile.Close()
+
+			createFile.WriteString(req.Form.Get("name"))
+
+			//Encriptamos el json de los ficheros con el codigo de la contraseña del server
+			var jsonFD = jsonF
+
+			err = ioutil.WriteFile("ficheros.json", jsonFD, 0644)
+			u.Chk(err)
+			u.Response(w, true, "Fichero creado correctamente", u.TokenSesion)
 		}
-
-		var name = string(f.Name)
-		//Encriptamos los datos con la clave del server
-		jsonName, err := json.Marshal(&f.Name)
-		u.Chk(err)
-		jsonName = []byte(u.Encode64(u.Encrypt(jsonName, u.Codee)))
-		jsonHash, err := json.Marshal(&f.Name)
-		u.Chk(err)
-		jsonHash = []byte(u.Encode64(u.Encrypt(jsonHash, u.Codee)))
-		jsonContent, err := json.Marshal(&f.Name)
-		u.Chk(err)
-		jsonContent = []byte(u.Encode64(u.Encrypt(jsonContent, u.Codee)))
-		f.Name = string(jsonName)
-		f.HashUser = jsonHash
-		f.Content = jsonContent
-		u.GFicheros[name] = f
-
-		var code []byte = nil
-		Fich := u.FicherosRegistrados{Key: code, Ficheros: u.GFicheros}
-		Fich.Key = u.Codee
-		Fich.Ficheros = u.GFicheros
-		os.Remove("ficheros.json")
-		_, err = os.Create("ficheros.json")
-		u.Chk(err)
-		jsonF, err := json.Marshal(&Fich)
-		u.Chk(err)
-
-		createFile, err := os.Create("../archivos/subidos/" + f.Name)
-		u.Chk(err)
-		defer createFile.Close()
-
-		createFile.WriteString(string(jsonContent))
-
-		//Encriptamos el json de los ficheros con el codigo de la contraseña del server
-		var jsonFD = jsonF
-
-		err = ioutil.WriteFile("ficheros.json", jsonFD, 0644)
-		u.Chk(err)
-		u.Response(w, true, "Fichero creado correctamente", u.TokenSesion)
 	}
 }
