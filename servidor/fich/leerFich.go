@@ -1,7 +1,6 @@
 package fich
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,26 +9,23 @@ import (
 
 func LeerFich(w http.ResponseWriter, req *http.Request) {
 
-	var fich = u.Fichero{}
-
 	if req != nil {
-		filename := req.Form.Get("filename")
-		user := u.Decode64(req.Form.Get("user"))
-
-		if fileSelected, ok := u.GFicheros[filename]; ok {
-			json.Marshal(fileSelected)
-			json.Unmarshal([]byte(fileSelected.HashUser), &fich.HashUser)
-			if bytes.Equal(fileSelected.HashUser, user) {
-				json.Unmarshal([]byte(fileSelected.Content), &fich.Content)
+		_, ok := u.GFicheros[req.Form.Get("filename")] // ¿existe ya el usuario?
+		if !ok {
+			u.Response(w, false, "\nERROR: No existe en la base de datos", nil)
+			return
+		} else {
+			if fileSelected, ok := u.GFicheros[req.Form.Get("filename")]; ok {
 				fmt.Println("Archivo encontrado, mandando al cliente ...")
 
-				u.Response(w, true, string(fileSelected.Content), u.TokenSesion)
-			} else {
-				u.Response(w, false, "ERROR: No tiene permisos para leer el archivo", u.TokenSesion)
-			}
+				jsonData, err := json.Marshal(fileSelected)
+				u.Chk(err)
+				jsonDato := u.Encode64(jsonData)
+				u.Response(w, true, jsonDato, u.TokenSesion)
 
-		} else {
-			u.Response(w, false, "ERROR: No se ha encontrado el archivo", u.TokenSesion)
+			} else {
+				u.Response(w, false, "ERROR: No se ha encontrado el archivo", u.TokenSesion)
+			}
 		}
 	}
 

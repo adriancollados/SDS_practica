@@ -35,7 +35,7 @@ type Resp struct {
 }
 
 type Fichero struct {
-	Name     string //nombre fichero
+	Name     []byte //nombre fichero
 	HashUser []byte //clave hash del usuario
 	Content  []byte //contenido del fichero
 }
