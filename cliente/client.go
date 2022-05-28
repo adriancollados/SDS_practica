@@ -8,14 +8,12 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	u "sds/util"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -254,28 +252,92 @@ func CrearFich(cmd string) {
 }
 
 ///////////////////////////////////////////
-///////			EnvioFich			///////
+///////		DescargarFich	    	///////
 ///////////////////////////////////////////
 
-func Fichup(filename string, cmd string) {
+func DescargarFich(cmd string, filename string) {
+	filepath := "../archivos/"
+
+	data := url.Values{}
+	data.Set("cmd", cmd)
+	data.Set("filename", filename)
+
+	r, err := u.Client.PostForm("https://localhost:10443", data)
+	u.Chk(err)
+
+	resp := u.Resp{}
+	byteValue, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+	var f = u.Fichero{}
+	json.Unmarshal(u.Decode64(resp.Msg), &f)
+
+	content := u.Decrypt(f.Content, UserLog.Key)
+
+	createFile, err := os.Create(filepath + filename)
+	u.Chk(err)
+
+	createFile.WriteString(string(content))
+	createFile.Close()
+
+	if resp.Ok {
+		fmt.Println("Fichero descargado")
+	} // copiamos la respuesta a la salida estándar
+}
+
+///////////////////////////////////////////
+///////			SubirFich			///////
+///////////////////////////////////////////
+
+func SubirFich(cmd string, filename string) {
 	filepath := "../archivos/" + filename
 	if isExist(filepath) {
-		fmt.Println("La ruta es correcta")
-		// file, err := os.Open(filepath) // abrimos el fichero de origen (cliente)
-		// u.Chk(err)
-		// defer file.Close() // cerramos al salir de ámbito
+		file, err := os.Open(filepath)
+		if err != nil {
+			panic(err)
+		}
 
-		t := time.Now() // timestamp para medir tiempo
-		// hacemos un post con formato octet-stream (binario) y ponemos el reader del fichero directamente como Body
+		byteValue, _ := ioutil.ReadAll(file) //Guardamos el contenido del fichero en la variable en bytes
+		file.Close()
+		f := u.Fichero{}
+		json.Marshal(byteValue)
+		json.Unmarshal(byteValue, &f.Content)
+
+		f.Name = []byte(filename)
+		f.HashUser = UserLog.Key
+		f.Content = byteValue
+
+		jsonName := u.Encode64(u.Encrypt([]byte(f.Name), UserLog.Key))
+		var aux = string(u.Decode64(jsonName))
+		var entra = false
+		for ok := true; ok; ok = strings.ContainsAny(aux, "/") {
+			aux = u.Encode64(u.Encrypt([]byte(f.Name), UserLog.Key))
+			entra = true
+		}
+		if entra {
+			jsonName = aux
+		}
+		jsonContent := u.Encode64(u.Encrypt(f.Content, UserLog.Key))
+		jsonHash := u.Encode64(u.Encrypt(f.HashUser, UserLog.Key))
+
 		data := url.Values{}
-		data.Set("cmd", cmd) // comando (string)
-		data.Set("fichero", filename)
-		data.Set("user", u.Encode64(UserLog.Key))
+		data.Set("cmd", "subirFichero")
+		data.Set("id", filename)
+		data.Set("name", jsonName)
+		data.Set("content", jsonContent)
+		data.Set("hash", jsonHash)
 
-		resp, err := u.Client.PostForm("https://localhost:10443", data)
+		r, err := u.Client.PostForm("https://localhost:10443", data)
 		u.Chk(err)
-		fmt.Println("CLIENTE::", time.Since(t), ":: Post realizado") // imprimimos tiempo
-		io.Copy(os.Stdout, resp.Body)                                // copiamos la respuesta a la salida estándar
+		resp := u.Resp{}
+		byteResp, _ := ioutil.ReadAll(r.Body)
+		r.Body.Close()
+		json.Unmarshal(byteResp, &resp)
+		fmt.Println(resp.Msg)
+		if resp.Ok {
+			err = os.Remove(filepath)
+			u.Chk(err)
+		} // copiamos la respuesta a la salida estándar
 	}
 }
 
@@ -366,6 +428,58 @@ func ListarFich(cmd string) {
 }
 
 ///////////////////////////////////////////
+///////			EliminarFICH		///////
+///////////////////////////////////////////
+
+func EliminarFich(cmd string, filename string) {
+
+	data := url.Values{}
+	data.Set("cmd", "listarFicheros")
+
+	r, err := u.Client.PostForm("https://localhost:10443", data)
+	u.Chk(err)
+
+	resp := u.Resp{}
+	byteValue, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+	f := u.FicherosRegistrados{}
+	json.Unmarshal(u.Decode64(resp.Msg), &f)
+
+	ficheros := f.Ficheros
+	var selectedFich = false
+	if resp.Ok {
+		for fich := range ficheros {
+			hash := u.Decrypt(ficheros[fich].HashUser, UserLog.Key)
+			if bytes.Equal(hash, UserLog.Key) {
+				if fich == filename {
+					selectedFich = true
+				}
+			}
+		}
+	}
+	if selectedFich {
+		dataRemove := url.Values{}
+		dataRemove.Set("cmd", cmd)
+		dataRemove.Set("filename", filename)
+
+		r, err := u.Client.PostForm("https://localhost:10443", dataRemove)
+		u.Chk(err)
+
+		respRemove := u.Resp{}
+		byteValue, _ := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		json.Unmarshal(byteValue, &respRemove)
+
+		fmt.Println(respRemove.Msg)
+
+	} else {
+		fmt.Println("No existe o no se dispone de ese archivo")
+	}
+	Opciones(resp)
+}
+
+///////////////////////////////////////////
 ///////				Menu			///////
 ///////////////////////////////////////////
 func Opciones(resp u.Resp) {
@@ -379,8 +493,9 @@ func Opciones(resp u.Resp) {
 			fmt.Println("2. Listar mis archivos")
 			fmt.Println("3. Leer archivo")
 			fmt.Println("4. Subir archivo")
-			fmt.Println("5. Eliminar archivo")
-			fmt.Println("6. Cerrar sesión")
+			fmt.Println("5. Descargar archivo")
+			fmt.Println("6. Eliminar archivo")
+			fmt.Println("7. Cerrar sesión")
 			fmt.Println("------------------------")
 			fmt.Print("¿Qué opción desea realizar? ")
 			option := u.StringAInt(u.LeerTerminal())
@@ -399,22 +514,32 @@ func Opciones(resp u.Resp) {
 				fmt.Println("Se ha seleccionado LEER ARCHIVO")
 				fmt.Println("--------------------------------")
 				fmt.Print("Introduzca el nombre del fichero que desea ver: ")
+				fmt.Println()
 				filename := u.LeerTerminal()
 				LeerFich("leerFichero", filename)
 			case 4:
 				fmt.Println("Se ha seleccionado SUBIR ARCHIVO")
 				fmt.Println("--------------------------------")
 				fmt.Print("Introduzca el nombre del fichero que desea subir: ")
-				//filename := u.LeerTerminal()
-
-			case 5:
-				fmt.Println("Se ha seleccionado SUBIR ARCHIVO")
-				fmt.Println("--------------------------------")
-				fmt.Print("Introduzca el nombre del fichero que desea subir: ")
 				filename := u.LeerTerminal()
 
-				Fichup(filename, "subirFichero")
+				SubirFich("subirFichero", filename)
+			case 5:
+				fmt.Println("Se ha seleccionado DESCARGAR ARCHIVO")
+				fmt.Println("--------------------------------")
+				fmt.Print("Introduzca el nombre del fichero que desea descargar: ")
+				filename := u.LeerTerminal()
+
+				DescargarFich("descargarFichero", filename)
 			case 6:
+				fmt.Println("Se ha seleccionado ELIMINAR ARCHIVO")
+				fmt.Println("--------------------------------")
+				fmt.Print("Introduzca el nombre del fichero que desea eliminar: ")
+				fmt.Println()
+				filename := u.LeerTerminal()
+
+				EliminarFich("eliminarFichero", filename)
+			case 7:
 				fmt.Println("\n¡Hasta luego!")
 				return
 			default:

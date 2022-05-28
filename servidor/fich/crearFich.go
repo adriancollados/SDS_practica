@@ -35,10 +35,9 @@ func CrearFich(w http.ResponseWriter, req *http.Request) {
 
 			createFile, err := os.Create("../archivos/subidos/" + req.Form.Get("name"))
 			u.Chk(err)
-			defer createFile.Close()
 
-			createFile.WriteString(req.Form.Get("name"))
-
+			createFile.WriteString(req.Form.Get("content"))
+			createFile.Close()
 			//Encriptamos el json de los ficheros con el codigo de la contraseña del server
 			var jsonFD = jsonF
 

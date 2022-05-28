@@ -30,12 +30,18 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	case "listarFicheros":
 		fmt.Println("Se ha seleccionado Listar Ficheros")
 		f.ListarFich(w, req)
-	// case "bajarFichero":
-	// 	fmt.Println("Se ha seleccionado Subir Fichero")
-	// 	f.Fichup(w, req)
+	case "eliminarFichero":
+		fmt.Println("Se ha seleccionado Eliminar Fichero")
+		f.EliminarFich(w, req)
+	case "subirFichero":
+		fmt.Println("Se ha seleccionado Subir Fichero")
+		f.CrearFich(w, req)
 	case "crearFichero":
 		fmt.Println("Se ha seleccionado Crear Fichero")
 		f.CrearFich(w, req)
+	case "descargarFichero":
+		fmt.Println("Se ha seleccionado Descargar Fichero")
+		f.LeerFich(w, req)
 	default:
 		panic("Opcion no encontrada")
 	}
