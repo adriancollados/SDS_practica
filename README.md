@@ -10,14 +10,13 @@ A tener en cuenta:
 
 - Revisar petada de cierre de sesion despues de leer o crear un archivo
 
-- Listar archivos
+-tiempos de respuesta y memoria
 
-- Codificar nombres de ficheros (recorremos el array de ficheros y los que concidan con el HashUser del usuario iniciado se listan)
+**-fecheros (para adri, fechas de ficheros)
 
-- Implementar subida, edicion y borrado de ficheros
+**-Posibilidad de compartir ficheros o carpetas con otros usuarios o grupos de usuarios y hacerlos públicos.
 
-
-
+**-Sistema de notas o comentarios en los ficheros tanto del propio usuario como de otros
 -----
 Cuando creamos el archivo. 
 -----
