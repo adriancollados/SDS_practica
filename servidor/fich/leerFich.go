@@ -10,7 +10,7 @@ import (
 func LeerFich(w http.ResponseWriter, req *http.Request) {
 
 	if req != nil {
-		_, ok := u.GFicheros[req.Form.Get("filename")] // ¿existe ya el usuario?
+		_, ok := u.GFicheros[req.Form.Get("filename")] // ¿existe ya el fichero?
 		if !ok {
 			u.Response(w, false, "\nERROR: No existe en la base de datos", nil)
 			return
@@ -23,8 +23,6 @@ func LeerFich(w http.ResponseWriter, req *http.Request) {
 				jsonDato := u.Encode64(jsonData)
 				u.Response(w, true, jsonDato, u.TokenSesion)
 
-			} else {
-				u.Response(w, false, "ERROR: No se ha encontrado el archivo", u.TokenSesion)
 			}
 		}
 	}
