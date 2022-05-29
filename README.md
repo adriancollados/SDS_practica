@@ -1,34 +1,30 @@
 # SDS_practica
-Práctica grupal de SDS de Alejandro Company y Adrián Collados
+Práctica de SDS de Alejandro Company y Adrián Collados
 
+Cómo ejecutar la práctica:
 
-A tener en cuenta:
+Para el cliente:
 
-- Controlar que no se puedan meter usuarios con contraseña y usuario vacios
+    + cd/cliente
+    + go run client.go
 
-- Controlar que no se puedan meter ficheros vacios
+Para el servidor:
 
-- Revisar petada de cierre de sesion despues de leer o crear un archivo
+    + cd/servidor
+    + go run server.go
 
--tiempos de respuesta y memoria
+LA CONTRASEÑA DEL SERVIDOR ES: 123
 
-**-fecheros (para adri, fechas de ficheros)
+Instrucciones carpeta /archivos:
 
-**-Posibilidad de compartir ficheros o carpetas con otros usuarios o grupos de usuarios y hacerlos públicos.
+    + Los archivos subidos al servidor se encuentran en la carpeta /archivos/subidos. Se encripta su nombre y su contenido.
+    + Los archivos dentro de /archivos pueden subirse introduciendo su nombre en el programa.
+    + Las descargas de archivos se efectúan en /archivos
 
-**-Sistema de notas o comentarios en los ficheros tanto del propio usuario como de otros
------
-Cuando creamos el archivo. 
------
-*** Importante ***
-No pasamos la clave del UserLog.Key para el conocimiento 0, es uno de los requisitos opcionales que pide el profe 
-*** ----- ***
+Instrucciones creado y subida de archivos:
 
-Desde el cliente le pasamos los campos uno a uno encriptados con la contraseña del cliente. 
-
-En el servidor, comprobamos que ese fichero no existe ya en el map de ficheros, si existe manda un error, si no existe continua con la creación. Recuperamos los datos uno a uno y los encriptamos con la contraseña del server y ya lo guardamos. 
-
-
------
-Leer ficheros
------
+    + En nuestra simulación sólo hemos contemplado la creación de ficheros de texto (.txt)
+    + Si creamos un archivo dentro de la aplicación siempre será txt.
+    + Admite la subida de cualquier tipo de fichero (dejamos un pdf de prueba).
+        ++ La opción de leer fichero en un archivo que no sea de texto tiene un final trágico XD.
+    + Se puede comentar cualquier fichero y queda su fecha registrada.

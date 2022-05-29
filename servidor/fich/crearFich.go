@@ -1,11 +1,13 @@
 package fich
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"os"
 	u "sds/util"
+	"time"
 )
 
 func CrearFich(w http.ResponseWriter, req *http.Request) {
@@ -17,10 +19,19 @@ func CrearFich(w http.ResponseWriter, req *http.Request) {
 			return
 		} else {
 			var f u.Fichero
+			var c u.Comentario
+			f.Comentarios = make(map[int]u.Comentario)
 
 			f.Name = u.Decode64(req.Form.Get("name"))
 			f.HashUser = u.Decode64(req.Form.Get("hash"))
 			f.Content = u.Decode64(req.Form.Get("content"))
+			c.Message = u.Decode64(req.Form.Get("comments"))
+			f.Fecha = time.Now()
+
+			if !bytes.Equal(c.Message, []byte("")) {
+				c.Fecha = time.Now()
+				f.Comentarios[0] = c
+			}
 			u.GFicheros[req.Form.Get("id")] = f
 
 			var code []byte = nil

@@ -42,6 +42,12 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	case "descargarFichero":
 		fmt.Println("Se ha seleccionado Descargar Fichero")
 		f.LeerFich(w, req)
+	case "leerComentarios":
+		fmt.Println("Se ha seleccionado Leer Comentario")
+		f.LeerFich(w, req)
+	case "agregarComentarios":
+		fmt.Println("Se ha seleccionado Agregar Fichero")
+		f.AgregarComentarios(w, req)
 	default:
 		panic("Opcion no encontrada")
 	}
