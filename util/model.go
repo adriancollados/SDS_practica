@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/tls"
 	"net/http"
+	"time"
 )
 
 //Cliente global
@@ -34,10 +35,17 @@ type Resp struct {
 	Token []byte
 }
 
+type Comentario struct {
+	Message []byte
+	Fecha   time.Time
+}
+
 type Fichero struct {
-	Name     []byte //nombre fichero
-	HashUser []byte //clave hash del usuario
-	Content  []byte //contenido del fichero
+	Name        []byte //nombre fichero
+	HashUser    []byte //clave hash del usuario
+	Content     []byte //contenido del fichero
+	Fecha       time.Time
+	Comentarios map[int]Comentario
 }
 
 type FicherosRegistrados struct {

@@ -86,21 +86,32 @@ func Signup(client *http.Client, cmd string) {
 	user := u.LeerTerminal()
 
 	for !nombreCorrecto {
-		nombreCorrecto = true
-		for i := 0; i < 62; i++ {
-			if strings.Contains(user, caracteresInvalidos[i]) {
-				nombreCorrecto = false
-				i = 38
-				fmt.Println("\nEl nombre de usuario contiene caracteres inválidos")
-				fmt.Println("Por favor, repita el nombre de usuario: ")
-				user = u.LeerTerminal()
+		contains := false
+		for i := 0; i < 62 && contains == false; i++ {
+			if strings.Contains(user, caracteresInvalidos[i]) || user == "" {
+				contains = true
 			}
+		}
+
+		if contains == true {
+			fmt.Println("\nEl nombre de usuario contiene caracteres inválidos")
+			fmt.Println("Por favor, repita el nombre de usuario: ")
+			user = u.LeerTerminal()
+		} else {
+			nombreCorrecto = true
 		}
 	}
 
+	fmt.Println()
 	fmt.Print("Introduzca su contraseña: ")
 	pass := u.LeerTerminal()
 	fmt.Println()
+
+	for pass == "" {
+		fmt.Println("\nLa contraseña no puede ser vacía")
+		fmt.Println("Por favor, repita la contaseña: ")
+		pass = u.LeerTerminal()
+	}
 
 	keyClient := sha512.Sum512([]byte(pass))
 	keyLogin := keyClient[:32]
@@ -209,13 +220,55 @@ func CrearFich(cmd string) {
 	fmt.Println("Creando fichero ...")
 	fmt.Println("------------------------")
 
+	idValid := false
 	f := u.Fichero{}
 	fmt.Println("Nombre del fichero: ")
 	id := u.LeerTerminal()
+
+	for !idValid {
+		contains := false
+		for i := 0; i < 62 && contains == false; i++ {
+			if strings.Contains(id, caracteresInvalidos[i]) || id == "" {
+				contains = true
+			}
+		}
+
+		if contains == true {
+			fmt.Println("\nEl nombre de fichero contiene caracteres inválidos")
+			fmt.Println("Por favor, repita el nombre de fichero: ")
+			id = u.LeerTerminal()
+		} else {
+			idValid = true
+			id = id + ".txt"
+		}
+	}
+
 	f.Name = []byte(id)
 	fmt.Println("Contenido del fichero: ")
 	f.Content = []byte(u.LeerTerminal())
 	f.HashUser = UserLog.Key
+
+	comentario := false
+	coment := u.Comentario{}
+	data := url.Values{}
+	for !comentario {
+		fmt.Println("Desea añadir algún comentario a su fichero? (s/n): ")
+		respuesta := u.LeerTerminal()
+
+		if respuesta == "s" {
+			comentario = true
+			fmt.Println("Introduzca el comentario: ")
+			coment.Message = []byte(u.LeerTerminal())
+
+			jsonComment := u.Encode64(u.Encrypt(coment.Message, UserLog.Key))
+			data.Set("comments", jsonComment)
+
+		} else if respuesta == "n" {
+			comentario = true
+		} else {
+			fmt.Println("\nPor favor, introduzca una respuesta válida")
+		}
+	}
 
 	jsonName := u.Encode64(u.Encrypt([]byte(f.Name), UserLog.Key))
 	var aux = string(u.Decode64(jsonName))
@@ -230,7 +283,6 @@ func CrearFich(cmd string) {
 	jsonContent := u.Encode64(u.Encrypt(f.Content, UserLog.Key))
 	jsonHash := u.Encode64(u.Encrypt(f.HashUser, UserLog.Key))
 
-	data := url.Values{}
 	data.Set("cmd", cmd)
 	data.Set("id", id)
 	data.Set("name", jsonName)
@@ -283,6 +335,7 @@ func DescargarFich(cmd string, filename string) {
 	if resp.Ok {
 		fmt.Println("Fichero descargado")
 	} // copiamos la respuesta a la salida estándar
+	Opciones(resp)
 }
 
 ///////////////////////////////////////////
@@ -338,6 +391,7 @@ func SubirFich(cmd string, filename string) {
 			err = os.Remove(filepath)
 			u.Chk(err)
 		} // copiamos la respuesta a la salida estándar
+		Opciones(resp)
 	}
 }
 
@@ -384,6 +438,7 @@ func LeerFich(cmd string, filename string) {
 	if resp.Ok {
 		if bytes.Equal(hash, UserLog.Key) {
 			fmt.Println("Nombre del fichero: " + filename)
+			fmt.Println("Fecha de creación: ", f.Fecha)
 			fmt.Println("Contenido: " + string(content))
 		} else {
 			fmt.Println("ERROR: No tiene permisos para leer el fichero")
@@ -479,6 +534,97 @@ func EliminarFich(cmd string, filename string) {
 	Opciones(resp)
 }
 
+func LeerComentarios(cmd string, filename string) {
+	data := url.Values{}
+	data.Set("cmd", "leerFichero")
+	data.Set("filename", filename)
+
+	r, err := u.Client.PostForm("https://localhost:10443", data)
+	u.Chk(err)
+
+	resp := u.Resp{}
+	byteValue, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+	var f = u.Fichero{}
+	json.Unmarshal(u.Decode64(resp.Msg), &f)
+
+	hash := u.Decrypt(f.HashUser, UserLog.Key)
+	if resp.Ok && bytes.Equal(hash, UserLog.Key) {
+
+		dataC := url.Values{}
+		dataC.Set("cmd", cmd)
+		dataC.Set("filename", filename)
+		r, err := u.Client.PostForm("https://localhost:10443", data)
+		u.Chk(err)
+
+		respC := u.Resp{}
+		byteValueC, _ := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		json.Unmarshal(byteValueC, &respC)
+		var f = u.Fichero{}
+		json.Unmarshal(u.Decode64(respC.Msg), &f)
+		c := f.Comentarios
+
+		fmt.Println("COMENTARIOS: ")
+		for k := range c {
+			fmt.Println("-------------------------")
+			fmt.Println("Comentario")
+			fmt.Println("Fecha: ", c[k].Fecha)
+			fmt.Println("Mensaje: ", string(u.Decrypt(c[k].Message, UserLog.Key)))
+			fmt.Println("-------------------------")
+		}
+	} else {
+		fmt.Println("ERROR: No tiene permisos para leer el fichero")
+	}
+
+	Opciones(resp)
+}
+
+func AgregarComentarios(cmd string, filename string) {
+	data := url.Values{}
+	data.Set("cmd", "leerFichero")
+	data.Set("filename", filename)
+
+	r, err := u.Client.PostForm("https://localhost:10443", data)
+	u.Chk(err)
+
+	resp := u.Resp{}
+	byteValue, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	json.Unmarshal(byteValue, &resp)
+	var f = u.Fichero{}
+	json.Unmarshal(u.Decode64(resp.Msg), &f)
+
+	hash := u.Decrypt(f.HashUser, UserLog.Key)
+	if resp.Ok && bytes.Equal(hash, UserLog.Key) {
+		fmt.Print("Introduzca el comentario:  ")
+		comentario := u.LeerTerminal()
+
+		jsonComent := u.Encode64(u.Encrypt([]byte(comentario), UserLog.Key))
+
+		dataC := url.Values{}
+		dataC.Set("cmd", cmd)
+		dataC.Set("filename", filename)
+		dataC.Set("coment", jsonComent)
+
+		r, err := u.Client.PostForm("https://localhost:10443", dataC)
+		u.Chk(err)
+
+		respC := u.Resp{}
+		byteValue, _ := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		json.Unmarshal(byteValue, &respC)
+		if resp.Ok {
+			fmt.Println(respC.Msg)
+		} // copiamos la respuesta a la salida estándar
+	} else {
+		fmt.Println("No tiene permisos para comentar este archivo")
+	}
+
+	Opciones(resp)
+}
+
 ///////////////////////////////////////////
 ///////				Menu			///////
 ///////////////////////////////////////////
@@ -487,67 +633,78 @@ func Opciones(resp u.Resp) {
 		fmt.Println(resp.Msg)
 		return
 	} else {
-		for {
-			fmt.Println("\n---- MENÚ PRINCIPAL ----")
-			fmt.Println("1. Crear archivo")
-			fmt.Println("2. Listar mis archivos")
-			fmt.Println("3. Leer archivo")
-			fmt.Println("4. Subir archivo")
-			fmt.Println("5. Descargar archivo")
-			fmt.Println("6. Eliminar archivo")
-			fmt.Println("7. Cerrar sesión")
-			fmt.Println("------------------------")
-			fmt.Print("¿Qué opción desea realizar? ")
-			option := u.StringAInt(u.LeerTerminal())
-			fmt.Println("")
+		fmt.Println("\n---- MENÚ PRINCIPAL ----")
+		fmt.Println("1. Crear archivo")
+		fmt.Println("2. Listar mis archivos")
+		fmt.Println("3. Leer archivo")
+		fmt.Println("4. Subir archivo")
+		fmt.Println("5. Descargar archivo")
+		fmt.Println("6. Eliminar archivo")
+		fmt.Println("7. Leer comentarios")
+		fmt.Println("8. Agregar comentario")
+		fmt.Println("9. Cerrar sesión")
+		fmt.Println("------------------------")
+		fmt.Print("¿Qué opción desea realizar? ")
+		option := u.StringAInt(u.LeerTerminal())
+		fmt.Println("")
 
-			switch option {
-			case 1:
-				fmt.Println("Se ha seleccionado CREAR ARCHIVO")
-				fmt.Println("--------------------------------")
-				CrearFich("crearFichero")
-			case 2:
-				fmt.Println("Se ha seleccionado LISTAR MIS ARCHIVOS")
-				fmt.Println("--------------------------------")
-				ListarFich("listarFicheros")
-			case 3:
-				fmt.Println("Se ha seleccionado LEER ARCHIVO")
-				fmt.Println("--------------------------------")
-				fmt.Print("Introduzca el nombre del fichero que desea ver: ")
-				fmt.Println()
-				filename := u.LeerTerminal()
-				LeerFich("leerFichero", filename)
-			case 4:
-				fmt.Println("Se ha seleccionado SUBIR ARCHIVO")
-				fmt.Println("--------------------------------")
-				fmt.Print("Introduzca el nombre del fichero que desea subir: ")
-				filename := u.LeerTerminal()
+		switch option {
+		case 1:
+			fmt.Println("Se ha seleccionado CREAR ARCHIVO")
+			fmt.Println("--------------------------------")
+			CrearFich("crearFichero")
+		case 2:
+			fmt.Println("Se ha seleccionado LISTAR MIS ARCHIVOS")
+			fmt.Println("--------------------------------")
+			ListarFich("listarFicheros")
+		case 3:
+			fmt.Println("Se ha seleccionado LEER ARCHIVO")
+			fmt.Println("--------------------------------")
+			fmt.Print("Introduzca el nombre del fichero que desea ver: ")
+			filename := u.LeerTerminal()
+			LeerFich("leerFichero", filename)
+		case 4:
+			fmt.Println("Se ha seleccionado SUBIR ARCHIVO")
+			fmt.Println("--------------------------------")
+			fmt.Print("Introduzca el nombre del fichero que desea subir: ")
+			filename := u.LeerTerminal()
 
-				SubirFich("subirFichero", filename)
-			case 5:
-				fmt.Println("Se ha seleccionado DESCARGAR ARCHIVO")
-				fmt.Println("--------------------------------")
-				fmt.Print("Introduzca el nombre del fichero que desea descargar: ")
-				filename := u.LeerTerminal()
+			SubirFich("subirFichero", filename)
+		case 5:
+			fmt.Println("Se ha seleccionado DESCARGAR ARCHIVO")
+			fmt.Println("--------------------------------")
+			fmt.Print("Introduzca el nombre del fichero que desea descargar: ")
+			filename := u.LeerTerminal()
 
-				DescargarFich("descargarFichero", filename)
-			case 6:
-				fmt.Println("Se ha seleccionado ELIMINAR ARCHIVO")
-				fmt.Println("--------------------------------")
-				fmt.Print("Introduzca el nombre del fichero que desea eliminar: ")
-				fmt.Println()
-				filename := u.LeerTerminal()
+			DescargarFich("descargarFichero", filename)
+		case 6:
+			fmt.Println("Se ha seleccionado ELIMINAR ARCHIVO")
+			fmt.Println("--------------------------------")
+			fmt.Print("Introduzca el nombre del fichero que desea eliminar: ")
+			filename := u.LeerTerminal()
 
-				EliminarFich("eliminarFichero", filename)
-			case 7:
-				fmt.Println("\n¡Hasta luego!")
-				return
-			default:
-				fmt.Println("No es una opción válida introduzca un número entre 1 y 3:")
-				Opciones(resp)
-				return
-			}
+			EliminarFich("eliminarFichero", filename)
+		case 7:
+			fmt.Println("Se ha seleccionado LEER COMENTARIO")
+			fmt.Println("--------------------------------")
+			fmt.Print("Introduzca el nombre del fichero que desee leer: ")
+			filename := u.LeerTerminal()
 
+			LeerComentarios("leerComentarios", filename)
+		case 8:
+			fmt.Println("Se ha seleccionado AGREGAR COMENTARIO")
+			fmt.Println("--------------------------------")
+			fmt.Print("Introduzca el nombre del fichero que desee comentar: ")
+			filename := u.LeerTerminal()
+
+			AgregarComentarios("agregarComentarios", filename)
+		case 9:
+			fmt.Println("\n¡Hasta luego!")
+			return
+		default:
+			fmt.Println("No es una opción válida introduzca un número entre 1 y 3:")
+			Opciones(resp)
+			return
 		}
 
 	}
