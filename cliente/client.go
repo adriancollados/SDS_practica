@@ -489,7 +489,8 @@ func ListarFich(cmd string) {
 func EliminarFich(cmd string, filename string) {
 
 	data := url.Values{}
-	data.Set("cmd", "listarFicheros")
+	data.Set("cmd", "leerFichero")
+	data.Set("filename", filename)
 
 	r, err := u.Client.PostForm("https://localhost:10443", data)
 	u.Chk(err)
@@ -498,38 +499,29 @@ func EliminarFich(cmd string, filename string) {
 	byteValue, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	json.Unmarshal(byteValue, &resp)
-	f := u.FicherosRegistrados{}
+	var f = u.Fichero{}
 	json.Unmarshal(u.Decode64(resp.Msg), &f)
 
-	ficheros := f.Ficheros
-	var selectedFich = false
+	hash := u.Decrypt(f.HashUser, UserLog.Key)
+
 	if resp.Ok {
-		for fich := range ficheros {
-			hash := u.Decrypt(ficheros[fich].HashUser, UserLog.Key)
-			if bytes.Equal(hash, UserLog.Key) {
-				if fich == filename {
-					selectedFich = true
-				}
-			}
+		if bytes.Equal(hash, UserLog.Key) {
+			dataRemove := url.Values{}
+			dataRemove.Set("cmd", cmd)
+			dataRemove.Set("filename", filename)
+
+			r, err := u.Client.PostForm("https://localhost:10443", dataRemove)
+			u.Chk(err)
+
+			respRemove := u.Resp{}
+			byteValue, _ := ioutil.ReadAll(r.Body)
+			defer r.Body.Close()
+			json.Unmarshal(byteValue, &respRemove)
+
+			fmt.Println(respRemove.Msg)
+		} else {
+			fmt.Println("ERROR: No tiene permisos para leer el fichero")
 		}
-	}
-	if selectedFich {
-		dataRemove := url.Values{}
-		dataRemove.Set("cmd", cmd)
-		dataRemove.Set("filename", filename)
-
-		r, err := u.Client.PostForm("https://localhost:10443", dataRemove)
-		u.Chk(err)
-
-		respRemove := u.Resp{}
-		byteValue, _ := ioutil.ReadAll(r.Body)
-		defer r.Body.Close()
-		json.Unmarshal(byteValue, &respRemove)
-
-		fmt.Println(respRemove.Msg)
-
-	} else {
-		fmt.Println("No existe o no se dispone de ese archivo")
 	}
 	Opciones(resp)
 }
